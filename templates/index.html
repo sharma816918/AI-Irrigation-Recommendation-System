@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irrigation Recommendation System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef7ee;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2e7d32;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 25px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1b5e20;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #eef7ee;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .score {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .level {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🌱 Irrigation Recommendation System</h1>
+
+        <form method="POST">
+
+            <label>Soil Moisture (%)</label>
+            <input type="number"
+                   name="soil_moisture"
+                   min="0"
+                   max="100"
+                   step="0.1"
+                   required>
+
+            <label>Temperature (°C)</label>
+            <input type="number"
+                   name="temperature"
+                   min="0"
+                   max="50"
+                   step="0.1"
+                   required>
+
+            <label>Humidity (%)</label>
+            <input type="number"
+                   name="humidity"
+                   min="0"
+                   max="100"
+                   step="0.1"
+                   required>
+
+            <label>Rain Probability (%)</label>
+            <input type="number"
+                   name="rain_probability"
+                   min="0"
+                   max="100"
+                   step="0.1"
+                   required>
+
+            <label>Crop</label>
+
+            <select name="crop" required>
+                <option value="">Select Crop</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Rice">Rice</option>
+                <option value="Tomato">Tomato</option>
+                <option value="Potato">Potato</option>
+                <option value="Maize">Maize</option>
+            </select>
+
+            <button type="submit">
+                Check Irrigation
+            </button>
+
+        </form>
+
+
+        {% if result is not none %}
+
+        <div class="result">
+
+            <h2>Recommendation</h2>
+
+            <p>
+                Crop: {{ crop }}
+            </p>
+
+            <p class="score">
+                Irrigation Score:
+                {{ "%.2f"|format(result) }}
+            </p>
+
+            <p>Irrigation Level:</p>
+
+            <p class="level">
+                {{ level }}
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
