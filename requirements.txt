@@ -1,0 +1,10 @@
+streamlit
+langchain
+langchain-google-genai
+pydantic
+scikit-fuzzy
+numpy
+flask
+scipy
+networkx
+packaging
