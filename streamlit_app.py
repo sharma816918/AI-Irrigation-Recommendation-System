@@ -3,7 +3,9 @@ import json
 
 from ai_helper import (
     extract_irrigation_data,
-    generate_irrigation_explanation
+    extract_irrigation_data_local,
+    generate_irrigation_explanation,
+    generate_local_explanation
 )
 
 from fuzzy_logic import get_irrigation_recommendation
@@ -15,10 +17,17 @@ st.set_page_config(
     layout="centered"
 )
 
+
 st.markdown("""
 <style>
+
 .stApp {
-    background: linear-gradient(135deg,#e8f5e9,#f1f8e9,#ffffff);
+    background: linear-gradient(
+        135deg,
+        #e8f5e9,
+        #f1f8e9,
+        #ffffff
+    );
 }
 
 .main-title {
@@ -52,16 +61,9 @@ st.markdown("""
 }
 
 .section-title {
-    color: #2e7d32;
+    color: #2e7d32 !important;
     font-size: 24px;
     font-weight: 700;
-}
-
-.footer {
-    text-align: center;
-    color: #607d60;
-    margin-top: 40px;
-    font-size: 14px;
 }
 
 div[data-testid="stMetric"] {
@@ -71,26 +73,32 @@ div[data-testid="stMetric"] {
 }
 
 div[data-testid="stMetricLabel"] {
-    color: #444444 !important;
+    color: #555555 !important;
 }
 
 div[data-testid="stMetricValue"] {
     color: #1b5e20 !important;
-    font-weight: 700;
 }
 
-div[data-testid="stTextArea"] textarea {
+textarea {
     color: #222222 !important;
-    background-color: #ffffff !important;
 }
 
-div[data-testid="stTextArea"] label {
+label {
     color: #222222 !important;
 }
 
 p {
     color: #222222;
 }
+
+.footer {
+    text-align: center;
+    color: #607d60;
+    margin-top: 40px;
+    font-size: 14px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -129,8 +137,9 @@ user_input = st.text_area(
     "📝 Describe your field",
     height=130,
     placeholder=(
-        "Example: My tomato crop has dry soil, temperature is 34°C, "
-        "humidity is 45% and rain chance is 10%."
+        "Example: My tomato crop has dry soil, "
+        "temperature is 34°C, humidity is 45% "
+        "and rain chance is 10%."
     )
 )
 
@@ -151,9 +160,17 @@ if button:
 
     if not user_input.strip():
 
-        st.warning("⚠️ Please enter your field conditions.")
+        st.warning(
+            "⚠️ Please enter your field conditions."
+        )
 
     else:
+
+        # =================================================
+        # STEP 1 - GEMINI EXTRACTION
+        # =================================================
+
+        extraction_source = "Gemini AI"
 
         try:
 
@@ -165,17 +182,68 @@ if button:
                     user_input
                 )
 
+        except Exception as extraction_error:
 
-            if isinstance(extracted_data, str):
+            error_text = str(
+                extraction_error
+            ).lower()
 
-                data = json.loads(extracted_data)
+            if (
+                "429" in error_text
+                or "quota" in error_text
+                or "resource_exhausted" in error_text
+                or "rate limit" in error_text
+            ):
+
+                st.warning(
+                    "⚠️ Gemini quota reached. "
+                    "Using local extraction instead."
+                )
+
+                extracted_data = extract_irrigation_data_local(
+                    user_input
+                )
+
+                extraction_source = "Local Fallback"
+
+            else:
+
+                st.warning(
+                    "⚠️ Gemini unavailable. "
+                    "Using local extraction instead."
+                )
+
+                extracted_data = extract_irrigation_data_local(
+                    user_input
+                )
+
+                extraction_source = "Local Fallback"
+
+
+        # =================================================
+        # STEP 2 - DATA
+        # =================================================
+
+        try:
+
+            if isinstance(
+                extracted_data,
+                str
+            ):
+
+                data = json.loads(
+                    extracted_data
+                )
 
             else:
 
                 data = extracted_data
 
 
-            if isinstance(data, list):
+            if isinstance(
+                data,
+                list
+            ):
 
                 data = data[0]
 
@@ -199,262 +267,301 @@ if button:
             )
 
 
-            score, level = get_irrigation_recommendation(
+        except Exception as data_error:
 
-                soil_value=soil_moisture,
-
-                temperature_value=temperature,
-
-                humidity_value=humidity,
-
-                rain_value=rain_probability
+            st.error(
+                "❌ Could not process field data."
             )
 
+            st.write(
+                str(data_error)
+            )
+
+            st.stop()
+
+
+        # =================================================
+        # STEP 3 - FUZZY LOGIC
+        # =================================================
+
+        score, level = get_irrigation_recommendation(
+
+            soil_value=soil_moisture,
+
+            temperature_value=temperature,
+
+            humidity_value=humidity,
+
+            rain_value=rain_probability
+        )
+
+
+        st.success(
+            "✅ Irrigation recommendation generated!"
+        )
+
+
+        # =================================================
+        # STEP 4 - AI INFORMATION
+        # =================================================
+
+        st.markdown(
+            '<div class="result-card">',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            '<div class="section-title">'
+            '🤖 Extracted Information'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        st.caption(
+            f"Data source: {extraction_source}"
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.metric(
+                "🌾 Crop",
+                crop
+            )
+
+            st.metric(
+                "💧 Soil Moisture",
+                f"{soil_moisture}%"
+            )
+
+            st.metric(
+                "🌡️ Temperature",
+                f"{temperature}°C"
+            )
+
+        with col2:
+
+            st.metric(
+                "💦 Humidity",
+                f"{humidity}%"
+            )
+
+            st.metric(
+                "🌧️ Rain Probability",
+                f"{rain_probability}%"
+            )
+
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+        # =================================================
+        # STEP 5 - FUZZY RESULT
+        # =================================================
+
+        st.markdown(
+            '<div class="result-card">',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            '<div class="section-title">'
+            '🧠 Fuzzy Logic Result'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.metric(
+                "Irrigation Score",
+                f"{score:.2f}"
+            )
+
+        with col2:
+
+            st.metric(
+                "Irrigation Level",
+                level
+            )
+
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+        # =================================================
+        # STEP 6 - STATUS
+        # =================================================
+
+        if level == "HIGH":
+
+            st.error(
+                "🔴 Status: High Irrigation Required"
+            )
+
+        elif level == "MEDIUM":
+
+            st.warning(
+                "🟡 Status: Moderate Irrigation Required"
+            )
+
+        elif level == "LOW":
+
+            st.info(
+                "🔵 Status: Low Irrigation Required"
+            )
+
+        else:
 
             st.success(
-                "✅ Irrigation recommendation generated!"
+                "🟢 Status: No Irrigation Required"
             )
 
 
-            # -----------------------------------------
-            # AI EXTRACTED INFORMATION
-            # -----------------------------------------
+        # =================================================
+        # STEP 7 - EXPLANATION
+        # =================================================
 
-            st.markdown(
-                '<div class="result-card">',
-                unsafe_allow_html=True
+        st.markdown(
+            '<div class="result-card">',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            '<div class="section-title">'
+            '💡 AI Explanation'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+        try:
+
+            with st.spinner(
+                "💡 AI is preparing the explanation..."
+            ):
+
+                explanation = generate_irrigation_explanation(
+
+                    crop=crop,
+
+                    soil_moisture=soil_moisture,
+
+                    temperature=temperature,
+
+                    humidity=humidity,
+
+                    rain_probability=rain_probability,
+
+                    score=score,
+
+                    level=level
+
+                )
+
+
+            st.write(
+                explanation
             )
 
-            st.markdown(
-                '<div class="section-title">🤖 AI Extracted Information</div>',
-                unsafe_allow_html=True
-            )
-
-            col1, col2 = st.columns(2)
-
-
-            with col1:
-
-                st.metric(
-                    "🌾 Crop",
-                    crop
-                )
-
-                st.metric(
-                    "💧 Soil Moisture",
-                    f"{soil_moisture}%"
-                )
-
-                st.metric(
-                    "🌡️ Temperature",
-                    f"{temperature}°C"
-                )
-
-
-            with col2:
-
-                st.metric(
-                    "💦 Humidity",
-                    f"{humidity}%"
-                )
-
-                st.metric(
-                    "🌧️ Rain Probability",
-                    f"{rain_probability}%"
-                )
-
-
-            st.markdown(
-                '</div>',
-                unsafe_allow_html=True
+            st.caption(
+                "🤖 Explanation generated by Gemini AI."
             )
 
 
-            # -----------------------------------------
-            # FUZZY LOGIC RESULT
-            # -----------------------------------------
+        except Exception as explanation_error:
 
-            st.markdown(
-                '<div class="result-card">',
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                '<div class="section-title">🧠 Fuzzy Logic Result</div>',
-                unsafe_allow_html=True
-            )
-
-
-            col1, col2 = st.columns(2)
-
-
-            with col1:
-
-                st.metric(
-                    "Irrigation Score",
-                    f"{score:.2f}"
-                )
-
-
-            with col2:
-
-                st.metric(
-                    "Irrigation Level",
-                    level
-                )
-
-
-            # -----------------------------------------
-            # STATUS
-            # -----------------------------------------
-
-            if level == "HIGH":
-
-                st.error(
-                    "🔴 Status: High Irrigation Required"
-                )
-
-            elif level == "MEDIUM":
-
-                st.warning(
-                    "🟡 Status: Moderate Irrigation Required"
-                )
-
-            elif level == "LOW":
-
-                st.info(
-                    "🔵 Status: Low Irrigation Required"
-                )
-
-            else:
-
-                st.success(
-                    "🟢 Status: No Irrigation Required"
-                )
-
-
-            st.markdown(
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-
-            # -----------------------------------------
-            # AI EXPLANATION
-            # -----------------------------------------
-
-            try:
-
-                with st.spinner(
-                    "💡 AI is preparing the explanation..."
-                ):
-
-                    explanation = generate_irrigation_explanation(
-
-                        crop=crop,
-
-                        soil_moisture=soil_moisture,
-
-                        temperature=temperature,
-
-                        humidity=humidity,
-
-                        rain_probability=rain_probability,
-
-                        score=score,
-
-                        level=level
-                    )
-
-
-                st.markdown(
-                    '<div class="result-card">',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    '<div class="section-title">💡 AI Explanation</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.write(
-                    explanation
-                )
-
-                st.markdown(
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-
-
-            except Exception as explanation_error:
-
-                error_text = str(
-                    explanation_error
-                ).lower()
-
-
-                if (
-                    "429" in error_text
-                    or "quota" in error_text
-                    or "resource_exhausted" in error_text
-                ):
-
-                    st.warning(
-                        "⚠️ Gemini API quota is currently exhausted. "
-                        "The fuzzy irrigation result above is still valid. "
-                        "AI explanation will work again when Gemini quota becomes available."
-                    )
-
-                else:
-
-                    st.warning(
-                        "⚠️ AI explanation could not be generated right now."
-                    )
-
-
-        except Exception as e:
-
-            error_text = str(e).lower()
+            error_text = str(
+                explanation_error
+            ).lower()
 
 
             if (
                 "429" in error_text
                 or "quota" in error_text
                 or "resource_exhausted" in error_text
+                or "rate limit" in error_text
             ):
 
-                st.error(
-                    "⚠️ Gemini API quota has been exhausted."
+                explanation = generate_local_explanation(
+
+                    crop=crop,
+
+                    soil_moisture=soil_moisture,
+
+                    temperature=temperature,
+
+                    humidity=humidity,
+
+                    rain_probability=rain_probability,
+
+                    score=score,
+
+                    level=level
+
                 )
 
-                st.info(
-                    "Please wait until the Gemini quota resets before testing AI extraction again."
+                st.write(
+                    explanation
                 )
 
-
-            elif (
-                "api key" in error_text
-                or "gemini_api_key" in error_text
-            ):
-
-                st.error(
-                    "❌ Gemini API key is not available."
+                st.caption(
+                    "ℹ️ Gemini quota reached. "
+                    "Automatic local explanation used."
                 )
 
 
             else:
 
-                st.error(
-                    "❌ Something went wrong."
+                explanation = generate_local_explanation(
+
+                    crop=crop,
+
+                    soil_moisture=soil_moisture,
+
+                    temperature=temperature,
+
+                    humidity=humidity,
+
+                    rain_probability=rain_probability,
+
+                    score=score,
+
+                    level=level
+
                 )
 
                 st.write(
-                    str(e)
+                    explanation
+                )
+
+                st.caption(
+                    "ℹ️ Gemini unavailable. "
+                    "Automatic local explanation used."
                 )
 
 
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+
 st.markdown(
-    '<div class="footer">🌱 AI Irrigation Recommendation System | LangChain + Gemini + Fuzzy Logic</div>',
+    '<div class="footer">'
+    '🌱 AI Irrigation Recommendation System | '
+    'LangChain + Gemini + Fuzzy Logic'
+    '</div>',
     unsafe_allow_html=True
 )
