@@ -36,39 +36,93 @@ st.markdown("""
     );
 }
 
+/* Main title */
+
 .main-title {
     text-align: center;
-    color: #1b5e20;
+    color: #1b5e20 !important;
     font-size: 42px;
     font-weight: 800;
     margin-bottom: 5px;
 }
 
+/* Subtitle */
+
 .subtitle {
     text-align: center;
-    color: #4e6e50;
+    color: #4e6e50 !important;
     font-size: 17px;
     margin-bottom: 30px;
 }
 
+/* Cards */
+
 .input-card,
 .result-card {
-    background-color: white;
+    background-color: #ffffff !important;
+    color: #222222 !important;
     padding: 25px;
     border-radius: 18px;
     box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
     margin-bottom: 20px;
 }
 
+/* Card text */
+
+.input-card *,
+.result-card * {
+    color: #222222;
+}
+
+/* Section headings */
+
 .section-title {
-    color: #2e7d32;
+    color: #2e7d32 !important;
     font-size: 24px;
     font-weight: 700;
 }
 
+/* Streamlit metric */
+
+div[data-testid="stMetric"] {
+    background-color: #ffffff !important;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+div[data-testid="stMetricLabel"] {
+    color: #444444 !important;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #1b5e20 !important;
+    font-weight: 700;
+}
+
+/* Text area */
+
+textarea {
+    color: #222222 !important;
+    background-color: #ffffff !important;
+}
+
+/* Text area label */
+
+label {
+    color: #222222 !important;
+}
+
+/* Normal text */
+
+p {
+    color: #222222;
+}
+
+/* Footer */
+
 .footer {
     text-align: center;
-    color: #607d60;
+    color: #607d60 !important;
     margin-top: 40px;
     font-size: 14px;
 }
