@@ -9,53 +9,32 @@ from ai_helper import (
 from fuzzy_logic import get_irrigation_recommendation
 
 
-# ==========================================
-# PAGE CONFIGURATION
-# ==========================================
-
 st.set_page_config(
     page_title="AI Irrigation System",
     page_icon="🌱",
     layout="centered"
 )
 
-
-# ==========================================
-# CUSTOM CSS
-# ==========================================
-
 st.markdown("""
 <style>
-
 .stApp {
-    background: linear-gradient(
-        135deg,
-        #e8f5e9,
-        #f1f8e9,
-        #ffffff
-    );
+    background: linear-gradient(135deg,#e8f5e9,#f1f8e9,#ffffff);
 }
-
-/* Main title */
 
 .main-title {
     text-align: center;
-    color: #1b5e20 !important;
+    color: #1b5e20;
     font-size: 42px;
     font-weight: 800;
     margin-bottom: 5px;
 }
 
-/* Subtitle */
-
 .subtitle {
     text-align: center;
-    color: #4e6e50 !important;
+    color: #4e6e50;
     font-size: 17px;
     margin-bottom: 30px;
 }
-
-/* Cards */
 
 .input-card,
 .result-card {
@@ -67,22 +46,23 @@ st.markdown("""
     margin-bottom: 20px;
 }
 
-/* Card text */
-
 .input-card *,
 .result-card * {
     color: #222222;
 }
 
-/* Section headings */
-
 .section-title {
-    color: #2e7d32 !important;
+    color: #2e7d32;
     font-size: 24px;
     font-weight: 700;
 }
 
-/* Streamlit metric */
+.footer {
+    text-align: center;
+    color: #607d60;
+    margin-top: 40px;
+    font-size: 14px;
+}
 
 div[data-testid="stMetric"] {
     background-color: #ffffff !important;
@@ -99,60 +79,32 @@ div[data-testid="stMetricValue"] {
     font-weight: 700;
 }
 
-/* Text area */
-
-textarea {
+div[data-testid="stTextArea"] textarea {
     color: #222222 !important;
     background-color: #ffffff !important;
 }
 
-/* Text area label */
-
-label {
+div[data-testid="stTextArea"] label {
     color: #222222 !important;
 }
-
-/* Normal text */
 
 p {
     color: #222222;
 }
-
-/* Footer */
-
-.footer {
-    text-align: center;
-    color: #607d60 !important;
-    margin-top: 40px;
-    font-size: 14px;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 
-# ==========================================
-# TITLE
-# ==========================================
-
 st.markdown(
-    '<div class="main-title">'
-    '🌱 AI Irrigation Recommendation System'
-    '</div>',
+    '<div class="main-title">🌱 AI Irrigation Recommendation System</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">'
-    'AI + LangChain + Fuzzy Logic for Smart Irrigation'
-    '</div>',
+    '<div class="subtitle">AI + LangChain + Fuzzy Logic for Smart Irrigation</div>',
     unsafe_allow_html=True
 )
 
-
-# ==========================================
-# INPUT SECTION
-# ==========================================
 
 st.markdown(
     '<div class="input-card">',
@@ -160,9 +112,7 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="section-title">'
-    '🌾 Enter Field Conditions'
-    '</div>',
+    '<div class="section-title">🌾 Enter Field Conditions</div>',
     unsafe_allow_html=True
 )
 
@@ -170,42 +120,25 @@ st.write(
     "Describe your crop and field conditions in normal language."
 )
 
-
-# ==========================================
-# EXAMPLE
-# ==========================================
-
 st.info(
-    "💡 Example: My tomato crop has dry soil, "
-    "temperature is 34°C, humidity is 45% "
-    "and rain chance is 10%."
+    "💡 Example: My tomato crop has dry soil, temperature is 34°C, "
+    "humidity is 45% and rain chance is 10%."
 )
-
-
-# ==========================================
-# INPUT BOX
-# ==========================================
 
 user_input = st.text_area(
     "📝 Describe your field",
     height=130,
     placeholder=(
-        "Example: My tomato crop has dry soil, "
-        "temperature is 34°C, humidity is 45% "
-        "and rain chance is 10%."
+        "Example: My tomato crop has dry soil, temperature is 34°C, "
+        "humidity is 45% and rain chance is 10%."
     )
 )
-
 
 st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
 
-
-# ==========================================
-# BUTTON
-# ==========================================
 
 button = st.button(
     "🌱 Get Irrigation Recommendation",
@@ -214,25 +147,15 @@ button = st.button(
 )
 
 
-# ==========================================
-# PROCESSING
-# ==========================================
-
 if button:
 
     if not user_input.strip():
 
-        st.warning(
-            "⚠️ Please enter your field conditions."
-        )
+        st.warning("⚠️ Please enter your field conditions.")
 
     else:
 
         try:
-
-            # ==================================
-            # AI DATA EXTRACTION
-            # ==================================
 
             with st.spinner(
                 "🤖 AI is understanding your field conditions..."
@@ -243,15 +166,9 @@ if button:
                 )
 
 
-            # ==================================
-            # CONVERT AI RESULT
-            # ==================================
-
             if isinstance(extracted_data, str):
 
-                data = json.loads(
-                    extracted_data
-                )
+                data = json.loads(extracted_data)
 
             else:
 
@@ -262,10 +179,6 @@ if button:
 
                 data = data[0]
 
-
-            # ==================================
-            # GET VALUES
-            # ==================================
 
             crop = data["crop"]
 
@@ -286,10 +199,6 @@ if button:
             )
 
 
-            # ==================================
-            # FUZZY LOGIC
-            # ==================================
-
             score, level = get_irrigation_recommendation(
 
                 soil_value=soil_moisture,
@@ -299,22 +208,17 @@ if button:
                 humidity_value=humidity,
 
                 rain_value=rain_probability
-
             )
 
-
-            # ==================================
-            # SUCCESS MESSAGE
-            # ==================================
 
             st.success(
                 "✅ Irrigation recommendation generated!"
             )
 
 
-            # ==================================
+            # -----------------------------------------
             # AI EXTRACTED INFORMATION
-            # ==================================
+            # -----------------------------------------
 
             st.markdown(
                 '<div class="result-card">',
@@ -322,12 +226,9 @@ if button:
             )
 
             st.markdown(
-                '<div class="section-title">'
-                '🤖 AI Extracted Information'
-                '</div>',
+                '<div class="section-title">🤖 AI Extracted Information</div>',
                 unsafe_allow_html=True
             )
-
 
             col1, col2 = st.columns(2)
 
@@ -369,9 +270,9 @@ if button:
             )
 
 
-            # ==================================
-            # FUZZY RESULT
-            # ==================================
+            # -----------------------------------------
+            # FUZZY LOGIC RESULT
+            # -----------------------------------------
 
             st.markdown(
                 '<div class="result-card">',
@@ -379,9 +280,7 @@ if button:
             )
 
             st.markdown(
-                '<div class="section-title">'
-                '🧠 Fuzzy Logic Result'
-                '</div>',
+                '<div class="section-title">🧠 Fuzzy Logic Result</div>',
                 unsafe_allow_html=True
             )
 
@@ -405,15 +304,44 @@ if button:
                 )
 
 
+            # -----------------------------------------
+            # STATUS
+            # -----------------------------------------
+
+            if level == "HIGH":
+
+                st.error(
+                    "🔴 Status: High Irrigation Required"
+                )
+
+            elif level == "MEDIUM":
+
+                st.warning(
+                    "🟡 Status: Moderate Irrigation Required"
+                )
+
+            elif level == "LOW":
+
+                st.info(
+                    "🔵 Status: Low Irrigation Required"
+                )
+
+            else:
+
+                st.success(
+                    "🟢 Status: No Irrigation Required"
+                )
+
+
             st.markdown(
                 '</div>',
                 unsafe_allow_html=True
             )
 
 
-            # ==================================
+            # -----------------------------------------
             # AI EXPLANATION
-            # ==================================
+            # -----------------------------------------
 
             try:
 
@@ -421,24 +349,21 @@ if button:
                     "💡 AI is preparing the explanation..."
                 ):
 
-                    explanation = (
-                        generate_irrigation_explanation(
+                    explanation = generate_irrigation_explanation(
 
-                            crop=crop,
+                        crop=crop,
 
-                            soil_moisture=soil_moisture,
+                        soil_moisture=soil_moisture,
 
-                            temperature=temperature,
+                        temperature=temperature,
 
-                            humidity=humidity,
+                        humidity=humidity,
 
-                            rain_probability=rain_probability,
+                        rain_probability=rain_probability,
 
-                            score=score,
+                        score=score,
 
-                            level=level
-
-                        )
+                        level=level
                     )
 
 
@@ -448,13 +373,13 @@ if button:
                 )
 
                 st.markdown(
-                    '<div class="section-title">'
-                    '💡 AI Explanation'
-                    '</div>',
+                    '<div class="section-title">💡 AI Explanation</div>',
                     unsafe_allow_html=True
                 )
 
-                st.write(explanation)
+                st.write(
+                    explanation
+                )
 
                 st.markdown(
                     '</div>',
@@ -476,18 +401,15 @@ if button:
                 ):
 
                     st.warning(
-                        "⚠️ Gemini API quota is currently "
-                        "exhausted. The fuzzy irrigation "
-                        "result above is still valid. "
-                        "AI explanation will work again "
-                        "when Gemini quota becomes available."
+                        "⚠️ Gemini API quota is currently exhausted. "
+                        "The fuzzy irrigation result above is still valid. "
+                        "AI explanation will work again when Gemini quota becomes available."
                     )
 
                 else:
 
                     st.warning(
-                        "⚠️ AI explanation could not be "
-                        "generated right now."
+                        "⚠️ AI explanation could not be generated right now."
                     )
 
 
@@ -507,9 +429,9 @@ if button:
                 )
 
                 st.info(
-                    "Please wait until the Gemini quota "
-                    "resets before testing AI extraction again."
+                    "Please wait until the Gemini quota resets before testing AI extraction again."
                 )
+
 
             elif (
                 "api key" in error_text
@@ -519,6 +441,7 @@ if button:
                 st.error(
                     "❌ Gemini API key is not available."
                 )
+
 
             else:
 
@@ -531,14 +454,7 @@ if button:
                 )
 
 
-# ==========================================
-# FOOTER
-# ==========================================
-
 st.markdown(
-    '<div class="footer">'
-    '🌱 AI Irrigation Recommendation System '
-    '| LangChain + Gemini + Fuzzy Logic'
-    '</div>',
+    '<div class="footer">🌱 AI Irrigation Recommendation System | LangChain + Gemini + Fuzzy Logic</div>',
     unsafe_allow_html=True
 )
